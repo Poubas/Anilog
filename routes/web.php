@@ -8,10 +8,9 @@ use App\Http\Controllers\AnimeListController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\HomeController;
 
-Route::get("/", function () {
-    return view("welcome");
-});
+Route::get("/", [HomeController::class, 'welcome'])->name('welcome');
 
 Route::get("/dashboard", function () {
     return view("dashboard");
@@ -21,6 +20,8 @@ Route::get("/dashboard", function () {
 
 Route::get('/anime', [AnimeController::class, 'index'])->name('anime.browse');
 Route::get('/anime/{id}', [AnimeController::class, 'show'])->name('anime.show');
+
+Route::get('/anime/guest/{id}', [HomeController::class, 'showAnime'])->name('anime.guest.show');
 
 Route::get('/anime-lists/browse', [AnimeListController::class, 'browseAllLists'])
     ->name('anime-lists.browse');

@@ -144,7 +144,7 @@
                                 </a>
                             </div>
                         </div>
-
+                        
                         <!-- Settings Dropdown -->
                         <div class="hidden sm:flex sm:items-center sm:ms-6">
                             @if (Route::has('login'))
@@ -221,9 +221,7 @@
                     </div>
 
                     <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white dark:bg-gray-800 shadow-md overflow-hidden sm:rounded-lg">
-                        {{ $slot }}
-                    </div>
-                </div>
+                {{ $slot }}
             </main>
         </div>
     </body>
