@@ -1,9 +1,16 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ $animeList->name }}
-            </h2>
+            <div class="flex items-center space-x-4">
+                @if($animeList->image)
+                    <img src="{{ Storage::url($animeList->image) }}" 
+                         alt="{{ $animeList->name }}" 
+                         class="h-12 w-12 rounded-lg object-cover">
+                @endif
+                <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+                    {{ $animeList->name }}
+                </h2>
+            </div>
             <div class="flex space-x-2">
                 <button
                     x-data="{}"
@@ -61,23 +68,30 @@
                     @if($animeCount > 0)
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             @foreach($animes as $anime)
-                                <x-card
-                                    image="{{ $anime->image_url ?? null }}"
-                                    imageAlt="{{ $anime->title }}"
-                                    title="{{ $anime->title }}"
-                                >
-                                    <div class="mt-4 flex flex-col gap-2">
-                                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                                            {{ Str::limit($anime->description ?? '', 80) }}
+                                <div class="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                                    <!-- Image -->
+                                    @if($anime->image_url)
+                                        <img src="{{ $anime->image_url }}" alt="{{ $anime->title }}" class="w-full h-48 object-cover">
+                                    @else
+                                        <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                                            <span class="text-4xl font-bold text-white">{{ strtoupper(substr($anime->title, 0, 1)) }}</span>
+                                        </div>
+                                    @endif
+                                    
+                                    <!-- Content -->
+                                    <div class="p-4">
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 truncate" title="{{ $anime->title }}">
+                                            {{ $anime->title }}
+                                        </h3>
+                                        
+                                        <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-4">
+                                            {{ Str::limit($anime->synopsis ?? 'No description available.', 100) }}
                                         </p>
                                         
-                                        <div class="mt-auto flex justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-700">
+                                        <div class="flex justify-between items-center">
                                             <a href="{{ route('anime.show', $anime->mal_id) }}" 
-                                               class="text-blue-500 hover:text-blue-700 font-medium text-sm flex items-center">
-                                                <span>View details</span>
-                                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                                </svg>
+                                               class="text-blue-500 hover:text-blue-700 font-medium text-sm">
+                                                View Details
                                             </a>
                                             
                                             <form action="{{ route('anime-lists.remove-anime', ['animeList' => $animeList->id, 'anime' => $anime->id]) }}" 
@@ -87,14 +101,14 @@
                                                 @method('DELETE')
                                                 <button type="submit" class="text-red-500 hover:text-red-700 font-medium text-sm flex items-center">
                                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                     </svg>
-                                                    <span>Remove</span>
+                                                    Remove
                                                 </button>
                                             </form>
                                         </div>
                                     </div>
-                                </x-card>
+                                </div>
                             @endforeach
                         </div>
                     @else
@@ -293,7 +307,7 @@
                 {{ __('Edit Anime List') }}
             </h2>
             
-            <form method="POST" action="{{ route('anime-lists.update', $animeList) }}" class="mt-6 space-y-6">
+            <form method="POST" action="{{ route('anime-lists.update', $animeList) }}" class="mt-6 space-y-6" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
 
@@ -313,6 +327,37 @@
                         placeholder="A short description of your anime list..."
                     >{{ $animeList->description }}</textarea>
                     <x-input-error :messages="$errors->get('description')" class="mt-2" />
+                </div>
+
+                <!-- Image Upload -->
+                <div>
+                    <x-input-label for="image" :value="__('Cover Image')" />
+                    
+                    @if($animeList->image)
+                        <div class="mb-3">
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Current image:</p>
+                            <img src="{{ Storage::url($animeList->image) }}" alt="Current cover" class="h-32 object-cover rounded mt-1">
+                        </div>
+                    @endif
+                    
+                    <input 
+                        type="file" 
+                        id="image" 
+                        name="image" 
+                        accept="image/*"
+                        class="mt-1 block w-full text-sm text-gray-500
+                            file:mr-4 file:py-2 file:px-4
+                            file:rounded-md file:border-0
+                            file:text-sm file:font-semibold
+                            file:bg-blue-50 file:text-blue-700
+                            hover:file:bg-blue-100
+                            dark:file:bg-gray-700 dark:file:text-gray-200
+                            dark:hover:file:bg-gray-600"
+                    />
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Upload a new cover image for your list (optional)
+                    </p>
+                    <x-input-error :messages="$errors->get('image')" class="mt-2" />
                 </div>
 
                 <div class="flex items-center justify-end mt-4">

@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Anime;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+
 class AnimeListController extends Controller
 {
     public function index()
@@ -25,15 +27,23 @@ class AnimeListController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
         $animeList = new AnimeList();
         $animeList->name = $request->input('name');
         $animeList->description = $request->input('description');
         $animeList->user_id = Auth::id();
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('anime_lists', 'public');
+            $animeList->image = $path;
+        }
+
         $animeList->save();
 
-        return redirect()->route('dashboard')->with('success', 'Anime list created successfully.');
+        return redirect()->route('dashboard')
+            ->with('success', 'Anime list created successfully.');
     }
 
     public function show(AnimeList $animeList)
@@ -75,19 +85,38 @@ class AnimeListController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
         $animeList->name = $request->input('name');
         $animeList->description = $request->input('description');
+
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($animeList->image) {
+                Storage::disk('public')->delete($animeList->image);
+            }
+
+            $path = $request->file('image')->store('anime_lists', 'public');
+            $animeList->image = $path;
+        }
+
         $animeList->save();
 
-        return redirect()->route('anime-lists.show', $animeList)->with('success', 'Anime list updated successfully.');
+        return redirect()->route('anime-lists.show', $animeList)
+            ->with('success', 'Anime list updated successfully.');
     }
 
     public function destroy(AnimeList $animeList)
     {
+        // Delete the image file if it exists
+        if ($animeList->image) {
+            Storage::disk('public')->delete($animeList->image);
+        }
+
         $animeList->delete();
-        return redirect()->route('anime.browse')->with('success', 'Anime list deleted successfully.');
+        return redirect()->route('dashboard')
+            ->with('success', 'Anime list deleted successfully.');
     }
 
     public function addAnimeToList(Request $request)

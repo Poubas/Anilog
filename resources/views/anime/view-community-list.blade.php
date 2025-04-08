@@ -77,90 +77,33 @@
                     
                     @if($animeCount > 0)
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                            @foreach($animes as $anime)
-                                <x-card
-                                    image="{{ $anime->image_url ?? null }}"
-                                    imageAlt="{{ $anime->title }}"
-                                    title="{{ $anime->title }}"
-                                >
-                                    <div class="mt-4 flex flex-col gap-2">
-                                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                                            {{ Str::limit($anime->description ?? '', 80) }}
-                                        </p>
-                                        
-                                        <div class="mt-auto flex justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-700">
-                                            <a href="{{ route('anime.show', $anime->mal_id) }}" 
-                                               class="text-blue-500 hover:text-blue-700 font-medium text-sm flex items-center">
-                                                <span>View details</span>
-                                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                                </svg>
-                                            </a>
-                                            
-                                            @if(Auth::check())
-                                                <button 
-                                                    x-data="{}"
-                                                    x-on:click="$dispatch('open-modal', 'add-to-my-list-{{ $anime->id }}')"
-                                                    class="text-green-500 hover:text-green-700 font-medium text-sm flex items-center">
-                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                                    </svg>
-                                                    <span>Add to My List</span>
-                                                </button>
-                                                
-                                                <!-- Modal for adding to user's own list -->
-                                                <x-modal name="add-to-my-list-{{ $anime->id }}" :show="false">
-                                                    <div class="p-6">
-                                                        <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-                                                            Add "{{ $anime->title }}" to Your List
-                                                        </h2>
-                                                        
-                                                        @if(Auth::user()->animeLists->count() > 0)
-                                                            <form action="{{ route('anime-lists.add-anime') }}" method="POST">
-                                                                @csrf
-                                                                <input type="hidden" name="anime_id" value="{{ $anime->mal_id }}">
-                                                                <input type="hidden" name="anime_title" value="{{ $anime->title }}">
-                                                                <input type="hidden" name="anime_image" value="{{ $anime->image_url }}">
-                                                                
-                                                                <div class="mb-4">
-                                                                    <x-input-label for="list_id" :value="__('Select a list')" />
-                                                                    <select 
-                                                                        id="list_id" 
-                                                                        name="list_id"
-                                                                        class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm"
-                                                                    >
-                                                                        @foreach(Auth::user()->animeLists as $userList)
-                                                                            <option value="{{ $userList->id }}">{{ $userList->name }}</option>
-                                                                        @endforeach
-                                                                    </select>
-                                                                </div>
-                                                                
-                                                                <div class="flex justify-end mt-6">
-                                                                    <x-secondary-button x-on:click="$dispatch('close')">
-                                                                        {{ __('Cancel') }}
-                                                                    </x-secondary-button>
-                                                                    
-                                                                    <x-primary-button class="ml-3">
-                                                                        {{ __('Add to List') }}
-                                                                    </x-primary-button>
-                                                                </div>
-                                                            </form>
-                                                        @else
-                                                            <div class="text-center py-4">
-                                                                <p class="mb-4 text-gray-600 dark:text-gray-400">You don't have any lists yet.</p>
-                                                                <a href="{{ route('dashboard') }}" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
-                                                                    Create a List First
-                                                                </a>
-                                                            </div>
-                                                        @endif
-                                                    </div>
-                                                </x-modal>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </x-card>
-                            @endforeach
-                        </div>
+    @foreach($animes as $anime)
+        <div class="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300">
+            @if($anime->image_url)
+                <img src="{{ $anime->image_url }}" alt="{{ $anime->title }}" class="w-full h-48 object-cover">
+            @else
+                <div class="h-48 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    <span class="text-4xl font-bold text-white">{{ strtoupper(substr($anime->title, 0, 1)) }}</span>
+                </div>
+            @endif
+            
+            <div class="p-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 truncate" title="{{ $anime->title }}">
+                    {{ $anime->title }}
+                </h3>
+                
+                <p class="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-4">
+                    {{ Str::limit($anime->synopsis ?? 'No description available.', 100) }}
+                </p>
+                
+                <a href="{{ route('anime.show', $anime->mal_id) }}" 
+                   class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition duration-300">
+                    View Details
+                </a>
+            </div>
+        </div>
+    @endforeach
+</div>
                     @else
                         <div class="text-center p-10 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
                             <p class="text-gray-500 dark:text-gray-400">This list doesn't have any anime yet.</p>
@@ -357,7 +300,7 @@
                     {{ __('Edit Anime List') }}
                 </h2>
                 
-                <form method="POST" action="{{ route('anime-lists.update', $animeList) }}" class="mt-6 space-y-6">
+                <form method="POST" action="{{ route('anime-lists.update', $animeList) }}" class="mt-6 space-y-6" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
@@ -377,6 +320,37 @@
                             placeholder="A short description of your anime list..."
                         >{{ $animeList->description }}</textarea>
                         <x-input-error :messages="$errors->get('description')" class="mt-2" />
+                    </div>
+
+                    <!-- Image Upload -->
+                    <div>
+                        <x-input-label for="image" :value="__('Cover Image')" />
+                        
+                        @if($animeList->image)
+                            <div class="mb-3">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Current image:</p>
+                                <img src="{{ Storage::url($animeList->image) }}" alt="Current cover" class="h-32 object-cover rounded mt-1">
+                            </div>
+                        @endif
+                        
+                        <input 
+                            type="file" 
+                            id="image" 
+                            name="image" 
+                            accept="image/*"
+                            class="mt-1 block w-full text-sm text-gray-500
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-md file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-blue-50 file:text-blue-700
+                                hover:file:bg-blue-100
+                                dark:file:bg-gray-700 dark:file:text-gray-200
+                                dark:hover:file:bg-gray-600"
+                        />
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            Upload a new cover image for your list (optional)
+                        </p>
+                        <x-input-error :messages="$errors->get('image')" class="mt-2" />
                     </div>
 
                     <div class="flex items-center justify-end mt-4">

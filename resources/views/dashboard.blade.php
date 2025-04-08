@@ -99,7 +99,25 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 @foreach(auth()->user()->favoriteLists as $list)
                                     <div class="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                                        <!-- Image Section -->
+                                        @if($list->image)
+                                            <div class="h-48 overflow-hidden">
+                                                <img src="{{ Storage::url($list->image) }}" 
+                                                     alt="{{ $list->name }}" 
+                                                     class="w-full h-full object-cover"
+                                                >
+                                            </div>
+                                        @else
+                                            <div class="h-48 bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                                                <span class="text-gray-400 dark:text-gray-500 text-4xl">
+                                                    {{ substr($list->name, 0, 1) }}
+                                                </span>
+                                            </div>
+                                        @endif
+                                        
+                                        <!-- Content Section -->
                                         <div class="p-5">
+                                            <!-- Title and Anime Count -->
                                             <div class="flex justify-between items-start mb-3">
                                                 <h4 class="font-bold text-lg text-gray-900 dark:text-white truncate" title="{{ $list->name }}">
                                                     {{ $list->name }}
@@ -114,15 +132,25 @@
                                                 </span>
                                             </div>
                                             
+                                            <!-- Description -->
                                             <p class="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2" title="{{ $list->description }}">
                                                 {{ $list->description ?? 'No description available.' }}
                                             </p>
                                             
+                                            <!-- Author and Favorites -->
                                             <div class="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mb-3">
-                                                <span>By: <a href="{{ route('users.show', $list->user) }}" class="text-blue-500 hover:underline">{{ $list->user->name }}</a></span>
-                                                <span>{{ $list->created_at->format('M d, Y') }}</span>
+                                                <div>
+                                                    <span>By: <a href="{{ route('users.show', $list->user) }}" class="text-blue-500 hover:underline">{{ $list->user->name }}</a></span>
+                                                </div>
+                                                <div class="flex items-center">
+                                                    <svg class="w-4 h-4 text-yellow-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                                    </svg>
+                                                    <span>{{ $list->favoritedBy->count() }} favorites</span>
+                                                </div>
                                             </div>
                                             
+                                            <!-- Action Button -->
                                             <a href="{{ route('community.anime-lists.show', $list) }}" class="block w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded transition duration-300">
                                                 View List
                                             </a>
@@ -221,7 +249,7 @@
                 {{ __('Create New Anime List') }}
             </h2>
             
-            <form method="POST" action="{{ route('anime-lists.store') }}" class="mt-6 space-y-6">
+            <form method="POST" action="{{ route('anime-lists.store') }}" class="mt-6 space-y-6" enctype="multipart/form-data">
                 @csrf
 
                 <div>
@@ -240,6 +268,29 @@
                         placeholder="A short description of your anime list..."
                     ></textarea>
                     <x-input-error :messages="$errors->get('description')" class="mt-2" />
+                </div>
+
+                <!-- Image Upload -->
+                <div>
+                    <x-input-label for="image" :value="__('Cover Image')" />
+                    <input 
+                        type="file" 
+                        id="image" 
+                        name="image" 
+                        accept="image/*"
+                        class="mt-1 block w-full text-sm text-gray-500
+                            file:mr-4 file:py-2 file:px-4
+                            file:rounded-md file:border-0
+                            file:text-sm file:font-semibold
+                            file:bg-blue-50 file:text-blue-700
+                            hover:file:bg-blue-100
+                            dark:file:bg-gray-700 dark:file:text-gray-200
+                            dark:hover:file:bg-gray-600"
+                    />
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Upload a cover image for your list (optional)
+                    </p>
+                    <x-input-error :messages="$errors->get('image')" class="mt-2" />
                 </div>
 
                 <div class="flex items-center justify-end mt-4">

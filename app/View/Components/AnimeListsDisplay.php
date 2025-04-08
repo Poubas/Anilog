@@ -26,8 +26,10 @@ class AnimeListsDisplay extends Component
         // Only try to get anime lists if user exists and relationship is defined
         if ($user && method_exists($user, 'animeLists')) {
             try {
-                // Get lists without eager loading animes
-                $this->lists = $user->animeLists()->get();
+                // Get lists with eager loading related data for efficiency
+                $this->lists = $user->animeLists()
+                    ->with(['user', 'favoritedBy'])
+                    ->get();
                 
                 // Manually add anime count to each list
                 foreach ($this->lists as $list) {
@@ -36,9 +38,6 @@ class AnimeListsDisplay extends Component
                         ->where('anime_list_id', $list->id)
                         ->count();
                 }
-                
-                // Debug output
-                \Log::info('Lists found: ' . $this->lists->count());
             } catch (\Exception $e) {
                 // Log error but don't crash
                 \Log::error('Error loading anime lists: ' . $e->getMessage());

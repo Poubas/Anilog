@@ -9,7 +9,7 @@
         <div class="mt-auto">
             <a href="{{ route('anime.show', $animeId) }}" 
                class="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full text-center transition duration-150 ease-in-out">
-                View Details
+                Ver Detalhes
             </a>
         </div>
     </div>
