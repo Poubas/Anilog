@@ -114,181 +114,186 @@
 
             <!-- Comments Section -->
             <div class="mt-6 bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Discussion</h3>
+    <div class="p-6">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Discussion</h3>
+        
+        @auth
+            <!-- Comment Form -->
+            <div class="mb-6">
+                <form action="{{ route('comments.store', $animeList) }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="parent_id" value="" id="reply_to_id">
+                    <div class="mb-3">
+                        <textarea 
+                            name="content"
+                            rows="3"
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                            placeholder="Add a comment..."
+                            required
+                            id="comment_content"
+                        ></textarea>
+                    </div>
                     
-                    @auth
-                        <!-- Comment Form -->
-                        <div class="mb-6">
-                            <form action="{{ route('comments.store', $animeList) }}" method="POST">
-                                @csrf
-                                <div class="mb-3">
-                                    <textarea 
-                                        name="content"
-                                        rows="3"
-                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-                                        placeholder="Add a comment..."
-                                        required
-                                    ></textarea>
+                    <div class="flex justify-between items-center">
+                        <div id="reply_indicator" class="text-sm text-gray-500 dark:text-gray-400 hidden">
+                            <span>Replying to: </span>
+                            <span id="reply_to_user" class="font-medium"></span>
+                            <button type="button" onclick="cancelReply()" class="ml-2 text-red-500 hover:text-red-600">
+                                Cancel
+                            </button>
+                        </div>
+                        
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
+                            Post Comment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        @else
+            <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
+                <p class="text-gray-600 dark:text-gray-400">
+                    <a href="{{ route('login') }}" class="text-blue-500 hover:underline">Log in</a> to join the discussion.
+                </p>
+            </div>
+        @endauth
+        
+        <!-- Comments List -->
+        @if(isset($comments) && $comments->count() > 0)
+            <div class="space-y-4">
+                @foreach($comments as $comment)
+                    <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4 last:border-0 last:mb-0 last:pb-0" id="comment-{{ $comment->id }}">
+                        <div class="flex items-start mb-2">
+                            <div class="flex-shrink-0">
+                                @if($comment->user->profile_picture)
+                                    <img src="{{ Storage::url($comment->user->profile_picture) }}" alt="{{ $comment->user->name }}" 
+                                         class="h-10 w-10 rounded-full object-cover">
+                                @else
+                                    <div class="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                                        <span class="text-gray-600 dark:text-gray-300">{{ substr($comment->user->name, 0, 1) }}</span>
+                                    </div>
+                                @endif
+                            </div>
+                            
+                            <div class="ml-3 flex-grow">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <a href="{{ route('users.show', $comment->user) }}" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:underline">
+                                            {{ $comment->user->name }}
+                                        </a>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            {{ $comment->created_at->diffForHumans() }}
+                                        </p>
+                                    </div>
+                                    
+                                    @if(Auth::id() === $comment->user_id || Auth::id() === $animeList->user_id)
+                                        <form action="{{ route('comments.destroy', $comment) }}" method="POST" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-xs text-red-500 hover:text-red-700" onclick="return confirm('Are you sure you want to delete this comment?')">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                                 
-                                <div class="flex justify-end">
-                                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
-                                        Post Comment
+                                <p class="mt-1 text-gray-700 dark:text-gray-300">{{ $comment->content }}</p>
+                                
+                                @auth
+                                    <button
+                                        type="button"
+                                        onclick="setReplyTo({{ $comment->id }}, '{{ $comment->user->name }}')"
+                                        class="text-xs text-blue-500 hover:text-blue-700 mt-2">
+                                        Reply
                                     </button>
+                                @endauth
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Show Replies -->
+                    @foreach($comment->replies as $reply)
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4 last:border-0 last:mb-0 last:pb-0 ml-6" id="comment-{{ $reply->id }}">
+                            <div class="flex items-start mb-2">
+                                <div class="flex-shrink-0">
+                                    @if($reply->user->profile_picture)
+                                        <img src="{{ Storage::url($reply->user->profile_picture) }}" alt="{{ $reply->user->name }}" 
+                                             class="h-8 w-8 rounded-full object-cover">
+                                    @else
+                                        <div class="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                                            <span class="text-gray-600 dark:text-gray-300">{{ substr($reply->user->name, 0, 1) }}</span>
+                                        </div>
+                                    @endif
                                 </div>
-                            </form>
-                        </div>
-                    @else
-                        <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
-                            <p class="text-gray-600 dark:text-gray-400">
-                                <a href="{{ route('login') }}" class="text-blue-500 hover:underline">Log in</a> to join the discussion.
-                            </p>
-                        </div>
-                    @endauth
-                    
-                    <!-- Comments List -->
-                    @if(isset($comments) && $comments->count() > 0)
-                        <div class="space-y-4">
-                            @foreach($comments as $comment)
-                                <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4 last:border-0 last:mb-0 last:pb-0">
-                                    <div class="flex items-start mb-2">
-                                        <div class="flex-shrink-0">
-                                            @if($comment->user->profile_picture)
-                                                <img src="{{ Storage::url($comment->user->profile_picture) }}" alt="{{ $comment->user->name }}" 
-                                                     class="h-10 w-10 rounded-full object-cover">
-                                            @else
-                                                <div class="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                                                    <span class="text-gray-600 dark:text-gray-300">{{ substr($comment->user->name, 0, 1) }}</span>
-                                                </div>
-                                            @endif
+                                
+                                <div class="ml-3 flex-grow">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <a href="{{ route('users.show', $reply->user) }}" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:underline">
+                                                {{ $reply->user->name }}
+                                            </a>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400 mx-1">•</span>
+                                            <a href="#comment-{{ $comment->id }}" class="text-xs text-blue-500 hover:underline">
+                                                @replying to {{ $comment->user->name }}
+                                            </a>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                                {{ $reply->created_at->diffForHumans() }}
+                                            </p>
                                         </div>
                                         
-                                        <div class="ml-3 flex-grow">
-                                            <div class="flex items-center justify-between">
-                                                <div>
-                                                    <a href="{{ route('users.show', $comment->user) }}" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:underline">
-                                                        {{ $comment->user->name }}
-                                                    </a>
-                                                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                                                        {{ $comment->created_at->diffForHumans() }}
-                                                    </p>
-                                                </div>
-                                                
-                                                @if(Auth::id() === $comment->user_id || Auth::id() === $animeList->user_id)
-                                                    <form action="{{ route('comments.destroy', $comment) }}" method="POST" class="inline">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="text-red-500 hover:text-red-700 text-xs" onclick="return confirm('Are you sure you want to delete this comment?')">
-                                                            Delete
-                                                        </button>
-                                                    </form>
-                                                @endif
-                                            </div>
-                                            
-                                            <p class="mt-1 text-gray-700 dark:text-gray-300">{{ $comment->content }}</p>
-                                            
-                                            @auth
-                                                <button
-                                                    x-data="{}"
-                                                    x-on:click="$dispatch('open-modal', 'reply-to-comment-{{ $comment->id }}')"
-                                                    class="text-xs text-blue-500 hover:text-blue-700 mt-2">
-                                                    Reply
+                                        @if(Auth::id() === $reply->user_id || Auth::id() === $animeList->user_id)
+                                            <form action="{{ route('comments.destroy', $reply) }}" method="POST" class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-xs text-red-500 hover:text-red-700" onclick="return confirm('Are you sure you want to delete this comment?')">
+                                                    Delete
                                                 </button>
-                                                
-                                                <!-- Reply Modal -->
-                                                <x-modal name="reply-to-comment-{{ $comment->id }}" :show="false">
-                                                    <div class="p-6">
-                                                        <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-                                                            Reply to {{ $comment->user->name }}
-                                                        </h2>
-                                                        
-                                                        <form action="{{ route('comments.store', $animeList) }}" method="POST">
-                                                            @csrf
-                                                            <input type="hidden" name="parent_id" value="{{ $comment->id }}">
-                                                            
-                                                            <div class="mb-3">
-                                                                <textarea 
-                                                                    name="content"
-                                                                    rows="3"
-                                                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-                                                                    placeholder="Write your reply..."
-                                                                    required
-                                                                ></textarea>
-                                                            </div>
-                                                            
-                                                            <div class="flex justify-end">
-                                                                <x-secondary-button x-on:click="$dispatch('close')">
-                                                                    {{ __('Cancel') }}
-                                                                </x-secondary-button>
-                                                                
-                                                                <x-primary-button class="ml-3">
-                                                                    {{ __('Post Reply') }}
-                                                                </x-primary-button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </x-modal>
-                                            @endauth
-                                            
-                                            <!-- Comment Replies -->
-                                            @if($comment->replies->count() > 0)
-                                                <div class="ml-6 mt-3 border-l-2 border-gray-200 dark:border-gray-700 pl-4 space-y-3">
-                                                    @foreach($comment->replies as $reply)
-                                                        <div class="pb-3 last:pb-0">
-                                                            <div class="flex items-start">
-                                                                <div class="flex-shrink-0">
-                                                                    @if($reply->user->profile_picture)
-                                                                        <img src="{{ Storage::url($reply->user->profile_picture) }}" alt="{{ $reply->user->name }}" 
-                                                                             class="h-8 w-8 rounded-full object-cover">
-                                                                    @else
-                                                                        <div class="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                                                                            <span class="text-gray-600 dark:text-gray-300 text-sm">{{ substr($reply->user->name, 0, 1) }}</span>
-                                                                        </div>
-                                                                    @endif
-                                                                </div>
-                                                                
-                                                                <div class="ml-3 flex-grow">
-                                                                    <div class="flex items-center justify-between">
-                                                                        <div>
-                                                                            <a href="{{ route('users.show', $reply->user) }}" class="text-sm font-medium text-gray-900 dark:text-gray-100 hover:underline">
-                                                                                {{ $reply->user->name }}
-                                                                            </a>
-                                                                            <p class="text-xs text-gray-500 dark:text-gray-400">
-                                                                                {{ $reply->created_at->diffForHumans() }}
-                                                                            </p>
-                                                                        </div>
-                                                                        
-                                                                        @if(Auth::id() === $reply->user_id || Auth::id() === $animeList->user_id)
-                                                                            <form action="{{ route('comments.destroy', $reply) }}" method="POST" class="inline">
-                                                                                @csrf
-                                                                                @method('DELETE')
-                                                                                <button type="submit" class="text-red-500 hover:text-red-700 text-xs" onclick="return confirm('Are you sure you want to delete this reply?')">
-                                                                                    Delete
-                                                                                </button>
-                                                                            </form>
-                                                                        @endif
-                                                                    </div>
-                                                                    
-                                                                    <p class="mt-1 text-sm text-gray-700 dark:text-gray-300">{{ $reply->content }}</p>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    @endforeach
-                                                </div>
-                                            @endif
-                                        </div>
+                                            </form>
+                                        @endif
                                     </div>
+                                    
+                                    <p class="mt-1 text-gray-700 dark:text-gray-300">{{ $reply->content }}</p>
+                                    
+                                    @auth
+                                        <button
+                                            type="button"
+                                            onclick="setReplyTo({{ $comment->id }}, '{{ $comment->user->name }}')"
+                                            class="text-xs text-blue-500 hover:text-blue-700 mt-2">
+                                            Reply
+                                        </button>
+                                    @endauth
                                 </div>
-                            @endforeach
+                            </div>
                         </div>
-                    @else
-                        <div class="text-center p-10 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
-                            <p class="text-gray-500 dark:text-gray-400">No comments yet. Be the first to comment!</p>
-                        </div>
-                    @endif
-                </div>
+                    @endforeach
+                @endforeach
             </div>
+        @else
+            <div class="text-center p-10 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
+                <p class="text-gray-500 dark:text-gray-400">No comments yet. Be the first to comment!</p>
+            </div>
+        @endif
+    </div>
+</div>
+
+<script>
+    function setReplyTo(commentId, userName) {
+        document.getElementById('reply_to_id').value = commentId;
+        document.getElementById('reply_to_user').textContent = userName;
+        document.getElementById('reply_indicator').classList.remove('hidden');
+        document.getElementById('comment_content').focus();
+        document.getElementById('comment_content').placeholder = `Reply to ${userName}...`;
+        
+        // Scroll to comment form
+        const commentForm = document.getElementById('comment_content');
+        commentForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    
+    function cancelReply() {
+        document.getElementById('reply_to_id').value = '';
+        document.getElementById('reply_indicator').classList.add('hidden');
+        document.getElementById('comment_content').placeholder = 'Add a comment...';
+    }
+</script>
         </div>
     </div>
 

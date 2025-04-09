@@ -19,7 +19,7 @@
                             <span class="text-sm text-gray-500 dark:text-gray-400">Sort by:</span>
                             <form action="{{ route('anime-lists.browse') }}" method="GET" class="inline-flex">
                                 <select name="sort" onchange="this.form.submit()" 
-                                    class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-sm py-1 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-sm py-1 px-3 text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                                     <option value="newest" {{ $sort == 'newest' ? 'selected' : '' }}>Newest</option>
                                     <option value="oldest" {{ $sort == 'oldest' ? 'selected' : '' }}>Oldest</option>
                                     <option value="alphabetical" {{ $sort == 'alphabetical' ? 'selected' : '' }}>A-Z</option>
